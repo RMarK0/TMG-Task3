@@ -1,9 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using static Task3.ExtensionClass;
 
 namespace Task3
 {
+    /*
+        Class for implementation of pairs text-index
+       
+        Text - Input text w\o comment
+        Index - Petrenko-Goltzman index for text w\o comment
+        CommentIndex - Petrenko-Goltzman index for comment
+        Language - Language code for determining if pair contains russian or english text
+        Comment - Input comment (only applicable for english text!)
+     */
     class TextIndexPair : IComparable<TextIndexPair>
     {
         internal readonly string Text;
@@ -56,14 +66,14 @@ namespace Task3
                     return 0;
                 return -1;
             }
-            throw new NotImplementedException();
+            throw new NotImplementedException("Language was not russian or english");
         }
 
         public override string ToString()
         {
             if (Comment == null)
                 return $"--> {Text} ({Index})";
-            return $"--> {Text} ({Index}) {Comment} ({CommentIndex})";
+            return $"--> {Text} ({Index}) | {Comment} ({CommentIndex})";
         }
     }
 
@@ -127,14 +137,13 @@ namespace Task3
         /// <param name="pair"> Input pair of text + index </param>
         public static void CalculateIndex(TextIndexPair pair)
         {
-
-            double index = 0.5;
+            double index = 0.5; // Base index
             int lengthText = 0;
             int lengthComment = 0;
             switch (pair.Language)
             {
                 case ("ru"):
-                    foreach (char ch in pair.Text)
+                    foreach (char ch in pair.Text) // Calculating index for text (ru)
                         if (Char.IsLetter(ch))
                         {
                             pair.Index += index;
@@ -146,7 +155,7 @@ namespace Task3
                     break;
 
                 case ("en"):
-                    foreach (char ch in pair.Text)
+                    foreach (char ch in pair.Text) // Calculating index for text (en)
                         if (Char.IsLetter(ch))
                         {
                             pair.Index += index;
@@ -157,7 +166,7 @@ namespace Task3
                     pair.Index *= lengthText;
 
                     index = 0.5;
-                    foreach (char ch in pair.Comment)
+                    foreach (char ch in pair.Comment) // Calculating index for comment
                         if (Char.IsLetter(ch))
                         {
                             pair.CommentIndex += index;
@@ -178,7 +187,7 @@ namespace Task3
         /// </summary>
         /// <param name="target"> Target Petrenko-Goltzman index value </param>
         /// <param name="pairs"> List of english (Index+Text) AND (CommentIndex+Comment) pairs </param>
-        /// <returns></returns>
+        /// <returns> Index for a pair with Index + CommentIndex = target </returns>
         public static int BinarySearch(double target, List<TextIndexPair> pairs)
         {
             int left = 0;
@@ -198,11 +207,11 @@ namespace Task3
             }
             if (Math.Abs(pairs[middle].Index + pairs[middle].CommentIndex - target) > 0.01)
             {
-                if (Math.Abs(pairs[middle].Index + pairs[middle].CommentIndex - target) < 0.01)
+                if (Math.Abs(pairs[middle].Index + pairs[middle].CommentIndex - target) < 0.01) 
                     middle = left;
                 else
                 {
-                    if (Math.Abs(pairs[middle].Index + pairs[middle].CommentIndex - target) < 0.01)
+                    if (Math.Abs(pairs[middle].Index + pairs[middle].CommentIndex - target) < 0.01) 
                         middle = right;
                     else
                         middle = -1;
@@ -216,45 +225,47 @@ namespace Task3
     {
         static void Main(string[] args)
         {
-            List<string> stringsRu = new List<string>();
-            List<string> stringsEn = new List<string>();
+            var stringsRu = new List<string>();
+            var stringsEn = new List<string>();
 
-            List<TextIndexPair> pairsRu = new List<TextIndexPair>();
-            List<TextIndexPair> pairsEn = new List<TextIndexPair>();
+            var pairsRu = new List<TextIndexPair>();
+            var pairsEn = new List<TextIndexPair>();
 
             try
             {
                 Console.Write("Enter path for russian strings: ");
-                var pathRu = Console.ReadLine();
+                var pathRu = Console.ReadLine();                // Here you can add path manually
                 Console.Write("Enter path for english strings: ");
-                var pathEn = Console.ReadLine();
+                var pathEn = Console.ReadLine();                // Same here
 
-                var watch = new System.Diagnostics.Stopwatch();
+                var watch = new System.Diagnostics.Stopwatch(); // Starting stopwatch to see execution time
                 watch.Start();
 
-                ExtensionClass.GetStringsFromFile(pathRu, pathEn, stringsRu, stringsEn);
+                GetStringsFromFile(pathRu, pathEn, stringsRu, stringsEn);
 
-                ExtensionClass.ProcessInput(stringsRu, stringsEn, pairsRu, pairsEn);
+                ProcessInput(stringsRu, stringsEn, pairsRu, pairsEn);
                 if (pairsRu.Count > 0 && pairsEn.Count > 0)
                 {
-                    foreach (TextIndexPair pair in pairsRu)
-                        ExtensionClass.CalculateIndex(pair);
+                    foreach (var pair in pairsRu)
+                        CalculateIndex(pair);
                     
-                    foreach (TextIndexPair pair in pairsEn)
-                        ExtensionClass.CalculateIndex(pair);
+                    foreach (var pair in pairsEn)
+                        CalculateIndex(pair);
 
-                    pairsRu.Sort();
-                    pairsEn.Sort();
+                    pairsRu.Sort(); // Using internal sorting algorythm
+                    pairsEn.Sort(); // Tried to implement quick sort, but turns out that internal algorythm is quite nice!
 
-                    foreach (TextIndexPair pair in pairsRu)
+                    foreach (var pair in pairsRu) // Seek for same index in english pairs
                     {
-                        int index = ExtensionClass.BinarySearch(pair.Index, pairsEn);
+                        var index = BinarySearch(pair.Index, pairsEn);
                         if (index == -1)
+                        {
                             Console.WriteLine($"{pair}\nNo alternative pair\n");
+                        }
                         else
                         {
                             Console.ForegroundColor = ConsoleColor.Green;
-                            Console.WriteLine($"{pair}\n{pairsEn[ExtensionClass.BinarySearch(pair.Index, pairsEn)]}\n");
+                            Console.WriteLine($"{pair}\n{pairsEn[BinarySearch(pair.Index, pairsEn)]}\n");
                             Console.ResetColor();
                         }
                     }
