@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
 using static Task3.ExtensionClass;
 
 namespace Task3
@@ -166,14 +168,41 @@ namespace Task3
                     pair.Index *= lengthText;
 
                     index = 0.5;
-                    foreach (char ch in pair.Comment) // Calculating index for comment
-                        if (Char.IsLetter(ch))
+
+                    var matches = Regex.Matches(pair.Comment,                            // 
+                        @"[\w'-]+", RegexOptions.CultureInvariant | RegexOptions.Multiline   // Counts words in input string with regex [\w']+
+                                                                  | RegexOptions.IgnoreCase);
+
+                    if (matches.Count > 5)
+                        for (int i = 0; i < 5; i++)
                         {
-                            pair.CommentIndex += index;
-                            index++;
-                            lengthComment++;
+                            string element = matches[i].Value;
+                            foreach (char ch in element)
+                            {
+                                if (Char.IsLetter(ch))
+                                {
+                                    pair.CommentIndex += index;
+                                    lengthComment++;
+                                    index++;
+                                }
+                            }
+                        }
+                    else
+                        foreach (Match match in matches)
+                        {
+                            string element = match.Value;
+                            foreach (char ch in element)
+                            {
+                                if (Char.IsLetter(ch))
+                                {
+                                    pair.CommentIndex += index;
+                                    lengthComment++;
+                                    index++;
+                                }
+                            }
                         }
                     
+
                     pair.CommentIndex *= lengthComment;
                     break;
 
